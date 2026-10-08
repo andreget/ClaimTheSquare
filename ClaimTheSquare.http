@@ -1,0 +1,27 @@
+@ClaimTheSquare_HostAddress = http://localhost:5063
+
+GET {{ClaimTheSquare_HostAddress}}/api/squares
+
+###
+POST {{ClaimTheSquare_HostAddress}}/api/squares
+Content-Type: application/json
+
+{ "index": 5, "text": "André", "backColor": "blue", "foreColor": "white" }
+
+###
+POST {{ClaimTheSquare_HostAddress}}/api/squares
+Content-Type: application/json
+
+{ "index": 99, "text": "Ugyldig Index", "backColor": "blue", "foreColor": "white" }
+
+###
+POST {{ClaimTheSquare_HostAddress}}/api/squares
+Content-Type: application/json
+
+{ "index": 3, "backColor": "blue", "foreColor": "white" }
+
+###
+POST {{ClaimTheSquare_HostAddress}}/api/squares
+Content-Type: application/json
+
+{ "index": 3, "text":"      ", "backColor": "blue", "foreColor": "white" }

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>ClaimTheSquare</title>
     <style>
         .myGrid {
             display: grid;
@@ -30,7 +30,9 @@
     <div id="app"></div>
     <script>
         let model;
+
         init();
+
         function updateView() {
             document.getElementById('app').innerHTML = /*HTML*/`
                 ${createFormHtml()}
@@ -92,35 +94,87 @@
                 `;
         }
 
-        function claim(index) {
+        async function claim(index) {
             const inputs = model.inputs;
             if (inputs.foreColor == null
                 || inputs.backColor == null
                 || inputs.text == null
                 || inputs.text.trim().length == 0
             ) return;
-            model.textObjects.push({ ...inputs, index });
+
+            // lag rute-objekt fra inputs
+            const tmpSquare = { ...inputs };
+            tmpSquare.index = index;
+            
+            // send rute-kravet til backend
+            try {
+                const response = await fetch('/api/squares', {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(tmpSquare)
+                });
+
+                // sjekker statuskode og oppdaterer i henhold til dette
+                switch (response.status) {
+                    case 201:
+                        // rute-krav ble gjort
+                        await getSquares();
+                        clearInputs();
+                        updateView();
+                        break;
+                    case 409:
+                        // rute-krav ble ikke gjort. Rute er tatt av en annen
+                        alert('Ruten er tatt av noen andre. Prøv å velge en annen rute');
+                        await getSquares();
+                        updateView();
+                        break;
+                    case 400:
+                        // rute-krav feilet pga manglende verdier
+                        alert('Ruten kunne ikke tas pga feil i input');
+                        break;
+                    default:
+                        alert(`Noe gikk galt under forsøket på å ta rute\nStatuskode: ${response.status}`);
+                }
+            }
+            catch (e) { 
+                alert(`Noe gikk galt under forsøket på å ta rute\n${e}`);
+            }
+        }
+
+        function clearInputs() { 
             model.inputs = {
                 foreColor: null,
                 backColor: null,
                 text: null,
             };
-            updateView();
         }
 
-        function init() {
+        async function init() {
             model = {
                 inputs: {
                     foreColor: null,
                     backColor: null,
                     text: null,
                 },
-                colors: ["black", "white", "gray", "silver", "maroon", "red", "purple", "fushsia", "green", "lime", "olive", "yellow", "navy", "blue", "teal", "aqua"],
-                textObjects: [
-                    { index: 17, text: 'Terje', backColor: 'green', foreColor: 'white' },
-                ]
+                colors: ["black", "white", "gray", "silver", "maroon", "red", "purple", "fuchsia", "green", "lime", "olive", "yellow", "navy", "blue", "teal", "aqua"],
+                textObjects: []
             };
+
+            await getSquares();
+
             updateView();
+        }
+
+        async function getSquares() { 
+            // hent rutene fra backend
+            const response = await fetch('/api/squares');
+            if (!response.ok) {
+                throw new Error(`Response status: ${response.status}`);
+            }
+
+            model.textObjects = await response.json();
         }
     </script>
 
